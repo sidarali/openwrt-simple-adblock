@@ -29,6 +29,10 @@ Telnet/ssh to your OpenWrt/LEDE router and run the following command:
 Please note that in order to succeed, this requires either wget/libopenssl or ufetch-client/libustream-mbedtls already installed on your router.
 
 # What's New
+4.1.3:
+- Code refactoring/bug fixing
+- Now available as an easy-to-install ipk pakage for LEDE Project
+
 4.0.0:
 - Move towards full use of PROCD, uhttp instances are now ran thru PROCD
 - Until full PROCD implementation, firewall rules are now set and removed thru iptables as part of the start/stop commands

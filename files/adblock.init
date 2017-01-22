@@ -118,10 +118,8 @@ set_iptables () {
 		iptables -w -A forwarding_rule -d $pixelserv_ip -j REJECT --reject-with icmp-host-unreachable -m comment --comment "simple_adblock"
 		iptables -w -A output_rule -d $pixelserv_ip -p tcp -j REJECT --reject-with tcp-reset -m comment --comment "simple_adblock"
 		iptables -w -A output_rule -d $pixelserv_ip -j REJECT --reject-with icmp-host-unreachable -m comment --comment "simple_adblock"
-		iptables -w -t nat -A prerouting_rule -p tcp -d $pixelserv_ip --dport 80 -j DNAT --to-destination $ip:65535 -m comment --comment "simple_adblock"
-		iptables -w -t nat -A prerouting_rule -p tcp -d $pixelserv_ip --dport 443 -j DNAT --to-destination $ip:65535 -m comment --comment "simple_adblock"
-#		iptables -w -t nat -A prerouting_rule -p tcp -d $pixelserv_ip --dport 80 -j REDIRECT --to-ports 65534 -m comment --comment "simple_adblock"
-#    	iptables -w -t nat -A prerouting_rule -p tcp -d $pixelserv_ip --dport 443 -j REDIRECT --to-ports 65535 -m comment --comment "simple_adblock"
+		iptables -w -t nat -A prerouting_rule -p tcp -d $pixelserv_ip -m multiport --dports 80,443 -j DNAT --to-destination $ip:65535 -m comment --comment "simple_adblock"
+#		iptables -w -t nat -A prerouting_rule -p tcp -d $pixelserv_ip -m multiport --dports 80,443 -j REDIRECT --to-ports 65535 -m comment --comment "simple_adblock"
 #    	iptables -w -t nat -A prerouting_rule -p tcp -d $pixelserv_ip -j ACCEPT -m comment --comment "simple_adblock"
 #    	iptables -w -A forwarding_rule -d $pixelserv_ip -j REJECT -m comment --comment "simple_adblock"
 	fi
@@ -130,19 +128,14 @@ set_iptables () {
 		ip6tables -w -A forwarding_rule -d $pixelserv_ipv6 -j REJECT --reject-with icmp6-addr-unreachable -m comment --comment "simple_adblock"
 		ip6tables -w -A output_rule -d $pixelserv_ipv6 -p tcp -j REJECT --reject-with tcp-reset -m comment --comment "simple_adblock"
 		ip6tables -w -A output_rule -d $pixelserv_ipv6 -j REJECT --reject-with icmp6-addr-unreachable -m comment --comment "simple_adblock"
-		ip6tables -w -t nat -A PREROUTING -p tcp -d $pixelserv_ipv6 --dport 80 -j DNAT --to-destination [$ipv6]:65535 -m comment --comment "simple_adblock"
-		ip6tables -w -t nat -A PREROUTING -p tcp -d $pixelserv_ipv6 --dport 443 -j DNAT --to-destination [$ipv6]:65535 -m comment --comment "simple_adblock"
+		ip6tables -w -t nat -A PREROUTING -p tcp -d $pixelserv_ipv6 -m multiport --dports 80,443 -j DNAT --to-destination [$ipv6]:65535 -m comment --comment "simple_adblock"
 	fi
 
 	if [ $((force_dns)) -ne 0 ]; then
-		if [ -n "$ip" ]; then
-			iptables -t nat -A prerouting_rule -i br-lan -p udp --dport 53 -j DNAT --to $ip -m comment --comment "simple_adblock"
-			iptables -t nat -A prerouting_rule -i br-lan -p tcp --dport 53 -j DNAT --to $ip -m comment --comment "simple_adblock"
-		fi
-		if [ -n "$ipv6" ]; then
-			ip6tables -t nat -A PREROUTING -i br-lan -p udp --dport 53 -j DNAT --to-destination [$ipv6] -m comment --comment "simple_adblock"
-			ip6tables -t nat -A PREROUTING -i br-lan -p tcp --dport 53 -j DNAT --to-destination [$ipv6] -m comment --comment "simple_adblock"
-		fi
+		[ -n "$ip" ] && iptables -t nat -A prerouting_rule -i br-lan -p tcp --dport 53 -j DNAT --to $ip -m comment --comment "simple_adblock"
+		[ -n "$ip" ] && iptables -t nat -A prerouting_rule -i br-lan -p udp --dport 53 -j DNAT --to $ip -m comment --comment "simple_adblock"
+		[ -n "$ipv6" ] && ip6tables -t nat -A PREROUTING -i br-lan -p tcp --dport 53 -j DNAT --to-destination [$ipv6] -m comment --comment "simple_adblock"
+		[ -n "$ipv6" ] && ip6tables -t nat -A PREROUTING -i br-lan -p udp --dport 53 -j DNAT --to-destination [$ipv6] -m comment --comment "simple_adblock"
 		[ -n "$ipv6" ] && label="$ip/$ipv6" || label="$ip"
 		[ -n "$label" ] && output "Forcing local DNS server: $label.\n" || output 'ERROR: Failed to obtain LAN IP address for DNS forcing!\n'
 	fi
